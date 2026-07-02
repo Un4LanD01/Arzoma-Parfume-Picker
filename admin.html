@@ -224,8 +224,7 @@
 <section class="login-section" id="login-screen">
   <div class="login-card glass">
     <h1><i class="fa-solid fa-wind" style="color:var(--primary-gold)"></i> ARZOMA</h1>
-      <p>Admin Dashboard — Masuk untuk mengelola database parfum<br>
-      <span style="font-size:12px; color:var(--text-muted);">Default: admin / admin123 (berlaku di semua perangkat)</span></p>
+      <p>Admin Dashboard — Masuk untuk mengelola database parfum</p>
     <form id="login-form" style="text-align:left;">
       <div class="form-group">
         <label for="login-username">Username</label>
@@ -234,9 +233,6 @@
       <div class="form-group">
         <label for="login-password">Password</label>
         <input type="password" id="login-password" class="form-control" placeholder="password" required>
-      </div>
-      <div id="setup-hint" style="display:none; font-size:12px; color:var(--primary-gold); margin-bottom:15px;">
-        <i class="fa-solid fa-info-circle"></i> Belum ada akun. Isi form di atas untuk membuat akun admin baru.
       </div>
       <div class="login-error" id="login-error"></div>
       <button type="submit" class="btn-primary" style="width:100%; justify-content:center; margin-top:5px;">
@@ -407,24 +403,25 @@
         </div>
       </div>
       <div class="admin-card glass" style="padding:25px; max-width:500px; margin-top:20px;">
-        <h3><i class="fa-solid fa-lock"></i> Ubah Password Admin</h3>
-        <p style="font-size:13px; color:var(--text-muted); margin-bottom:15px;">
-          Default universal <strong>admin / admin123</strong> selalu bisa dipakai di perangkat mana pun.
-          Ubah password di sini hanya berlaku untuk perangkat ini.
+        <h3><i class="fa-solid fa-lock"></i> Keamanan Admin</h3>
+        <p style="font-size:13px; color:var(--text-muted); margin-bottom:10px;">
+          Login admin sekarang diverifikasi via <strong>Netlify Functions</strong> (server-side).
+          Username & password disimpan sebagai <strong>Environment Variables</strong> di dashboard Netlify —
+          tidak ada di kode atau localStorage.
         </p>
-        <form id="change-password-form" style="margin-top:15px;">
-          <div class="form-group">
-            <label for="current-password">Password Saat Ini</label>
-            <input type="password" id="current-password" class="form-control" required>
-          </div>
-          <div class="form-group">
-            <label for="new-password">Password Baru</label>
-            <input type="password" id="new-password" class="form-control" required>
-          </div>
-          <button type="submit" class="btn-primary" style="justify-content:center;">
-            Ubah Password <i class="fa-solid fa-key"></i>
-          </button>
-        </form>
+        <p style="font-size:13px; color:var(--text-muted); margin-bottom:10px;">
+          <strong style="color:var(--primary-gold);">Cara mengganti password:</strong>
+        </p>
+        <ol style="font-size:13px; color:var(--text-muted); line-height:2; padding-left:20px;">
+          <li>Buka <a href="https://app.netlify.com" target="_blank" style="color:var(--primary-gold);">Netlify Dashboard</a></li>
+          <li>Pilih site Arzoma Anda &rarr; <strong>Site settings</strong> &rarr; <strong>Environment variables</strong></li>
+          <li>Edit variable <code style="background:rgba(255,255,255,0.05); padding:2px 6px; border-radius:4px;">ADMIN_PASSWORD</code></li>
+          <li>Redeploy site agar perubahan diterapkan</li>
+        </ol>
+        <p style="font-size:12px; color:var(--text-muted); margin-top:15px; border-top:1px solid rgba(255,255,255,0.05); padding-top:15px;">
+          <i class="fa-solid fa-info-circle"></i> Variable lain: <code style="background:rgba(255,255,255,0.05); padding:2px 6px; border-radius:4px;">ADMIN_USERNAME</code> (default: admin),
+          <code style="background:rgba(255,255,255,0.05); padding:2px 6px; border-radius:4px;">ADMIN_SECRET</code> (untuk signing token).
+        </p>
       </div>
     </div>
   </main>

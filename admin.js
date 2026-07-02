@@ -8,7 +8,6 @@ document.addEventListener("DOMContentLoaded", () => {
   const adminDashboard = document.getElementById("admin-dashboard");
   const loginForm = document.getElementById("login-form");
   const loginError = document.getElementById("login-error");
-  const setupHint = document.getElementById("setup-hint");
   const btnLogout = document.getElementById("btn-logout");
   const productForm = document.getElementById("admin-product-form");
   const productsBody = document.getElementById("admin-products-body");
@@ -17,7 +16,6 @@ document.addEventListener("DOMContentLoaded", () => {
   const waInput = document.getElementById("wa-number-input");
   const btnSaveWA = document.getElementById("btn-save-wa");
   const btnResetAnalytics = document.getElementById("btn-reset-analytics");
-  const changePasswordForm = document.getElementById("change-password-form");
   
   // Page navigation
   const navLinks = document.querySelectorAll(".admin-sidebar nav a");
@@ -29,105 +27,79 @@ document.addEventListener("DOMContentLoaded", () => {
   };
   let editingId = null;
 
-  // --- AUTH SYSTEM ---
-  const AUTH_KEY = "arzoma_admin_auth";
-  // Universal default admin — works on EVERY device
-  const DEFAULT_ADMIN_USER = "admin";
-  const DEFAULT_ADMIN_PASS = "admin123";
+  // --- AUTH SYSTEM (Server-side via Netlify Functions) ---
+  const TOKEN_KEY = "arzoma_admin_token";
 
-  function isLoggedIn() {
-    const data = localStorage.getItem(AUTH_KEY);
-    return data && JSON.parse(data).authenticated === true;
-  }
-
-  function checkAuth() {
-    if (isLoggedIn()) {
-      loginScreen.style.display = "none";
-      adminDashboard.style.display = "flex";
-      initData();
-      return true;
-    } else {
-      loginScreen.style.display = "flex";
-      adminDashboard.style.display = "none";
-      const data = localStorage.getItem(AUTH_KEY);
-      if (!data) {
-        setupHint.style.display = "block";
-        document.querySelector("#login-form button").textContent = "Buat Akun Admin";
-      }
-      return false;
+  async function checkAuth() {
+    const token = localStorage.getItem(TOKEN_KEY);
+    if (token) {
+      try {
+        const res = await fetch("/.netlify/functions/verify", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ token })
+        });
+        const data = await res.json();
+        if (data.valid) {
+          loginScreen.style.display = "none";
+          adminDashboard.style.display = "flex";
+          initData();
+          return true;
+        }
+      } catch {}
     }
+    loginScreen.style.display = "flex";
+    adminDashboard.style.display = "none";
+    document.querySelector("#login-form button").textContent = "Masuk";
+    return false;
   }
 
-  function saveAndLogin(username, password) {
-    const authData = { authenticated: true, username: btoa(username), password: btoa(password) };
-    localStorage.setItem(AUTH_KEY, JSON.stringify(authData));
-    loginError.style.display = "none";
-    checkAuth();
-  }
-
-  loginForm.addEventListener("submit", (e) => {
+  loginForm.addEventListener("submit", async (e) => {
     e.preventDefault();
     const username = document.getElementById("login-username").value.trim();
     const password = document.getElementById("login-password").value.trim();
-    
+    const btn = document.querySelector("#login-form button");
+
     if (!username || !password) {
       loginError.textContent = "Username dan password wajib diisi.";
       loginError.style.display = "block";
       return;
     }
 
-    // Universal default admin/admin123 ALWAYS works on every device
-    if (username === DEFAULT_ADMIN_USER && password === DEFAULT_ADMIN_PASS) {
-      saveAndLogin(DEFAULT_ADMIN_USER, DEFAULT_ADMIN_PASS);
-      return;
+    btn.disabled = true;
+    btn.innerHTML = '<i class="fa-solid fa-spinner fa-spin"></i> Memverifikasi...';
+    loginError.style.display = "none";
+
+    try {
+      const res = await fetch("/.netlify/functions/login", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ username, password })
+      });
+      const data = await res.json();
+
+      if (res.ok && data.token) {
+        localStorage.setItem(TOKEN_KEY, data.token);
+        loginError.style.display = "none";
+        checkAuth();
+      } else {
+        loginError.textContent = data.error || "Username atau password salah.";
+        loginError.style.display = "block";
+      }
+    } catch (err) {
+      loginError.textContent = "Gagal terhubung ke server. Coba lagi.";
+      loginError.style.display = "block";
     }
 
-    const existing = localStorage.getItem(AUTH_KEY);
-
-    // First-time setup: save whatever the user enters
-    if (!existing) {
-      saveAndLogin(username, password);
-      return;
-    }
-
-    // Check stored credentials
-    const authData = JSON.parse(existing);
-    if (btoa(username) === authData.username && btoa(password) === authData.password) {
-      saveAndLogin(username, password);
-      return;
-    }
-
-    loginError.textContent = "Username atau password salah. Default: admin / admin123";
-    loginError.style.display = "block";
+    btn.disabled = false;
+    btn.textContent = "Masuk";
   });
 
   btnLogout.addEventListener("click", () => {
-    const data = JSON.parse(localStorage.getItem(AUTH_KEY) || "{}");
-    data.authenticated = false;
-    localStorage.setItem(AUTH_KEY, JSON.stringify(data));
+    localStorage.removeItem(TOKEN_KEY);
     loginScreen.style.display = "flex";
     adminDashboard.style.display = "none";
-    setupHint.style.display = "none";
     document.querySelector("#login-form button").textContent = "Masuk";
-  });
-
-  // Change password
-  changePasswordForm.addEventListener("submit", (e) => {
-    e.preventDefault();
-    const currentPw = document.getElementById("current-password").value;
-    const newPw = document.getElementById("new-password").value;
-    const data = JSON.parse(localStorage.getItem(AUTH_KEY) || "{}");
-    const storedMatch = btoa(currentPw) === (data.password || "");
-    const defaultMatch = currentPw === DEFAULT_ADMIN_PASS;
-    if (!storedMatch && !defaultMatch) {
-      alert("Password saat ini salah!");
-      return;
-    }
-    // Save new password locally; default admin/admin123 always universal
-    data.password = btoa(newPw);
-    localStorage.setItem(AUTH_KEY, JSON.stringify(data));
-    alert("Password berhasil diubah! Default admin/admin123 tetap bisa dipakai di perangkat lain.");
-    changePasswordForm.reset();
   });
 
   // --- DATA INIT ---
