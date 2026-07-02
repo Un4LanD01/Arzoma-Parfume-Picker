@@ -424,9 +424,13 @@ INSERT INTO app_data (key, value) VALUES ('products', '[]');</pre>
           <tr><td style="padding:4px 8px; border:1px solid rgba(255,255,255,0.1);"><code>SUPABASE_URL</code></td><td style="padding:4px 8px; border:1px solid rgba(255,255,255,0.1);">Project URL Anda</td></tr>
           <tr><td style="padding:4px 8px; border:1px solid rgba(255,255,255,0.1);"><code>SUPABASE_SERVICE_KEY</code></td><td style="padding:4px 8px; border:1px solid rgba(255,255,255,0.1);">service_role key Anda</td></tr>
         </table>
-        <p style="font-size:13px; color:var(--text-muted);">
+        <p style="font-size:13px; color:var(--text-muted); margin-bottom:15px;">
           <span id="sync-status" style="color:var(--text-muted);"><i class="fa-solid fa-circle"></i> Status: localStorage (server tidak dikonfigurasi)</span>
         </p>
+        <button id="btn-test-db" class="btn-secondary" style="font-size:12px; padding:10px 18px;">
+          <i class="fa-solid fa-plug"></i> Test Koneksi Supabase
+        </button>
+        <div id="db-test-result" style="margin-top:12px;"></div>
       </div>
       <div class="admin-card glass" style="padding:25px; max-width:500px; margin-top:20px;">
         <h3><i class="fa-solid fa-lock"></i> Keamanan Admin</h3>

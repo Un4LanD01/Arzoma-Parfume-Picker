@@ -111,9 +111,10 @@ document.addEventListener("DOMContentLoaded", () => {
       if (data.source === "server" && Array.isArray(data.data) && data.data.length > 0) {
         perfumes = data.data;
         localStorage.setItem("arzoma_perfumes", JSON.stringify(perfumes));
-        updateSyncStatus(true);
+        updateSyncStatus(true, "tersinkronisasi (" + data.data.length + " produk)");
         return true;
       }
+      if (data.error) updateSyncStatus(false, "Error: " + data.error);
     } catch {}
     updateSyncStatus(false);
     return false;
@@ -129,22 +130,70 @@ document.addEventListener("DOMContentLoaded", () => {
         body: JSON.stringify({ token, products: perfumes })
       });
       const data = await res.json();
-      updateSyncStatus(data.saved === true);
+      if (data.saved) {
+        updateSyncStatus(true, "tersinkronisasi");
+      } else if (data.error) {
+        updateSyncStatus(false, "Gagal sync: " + data.error);
+      } else {
+        updateSyncStatus(false);
+      }
     } catch {
-      updateSyncStatus(false);
+      updateSyncStatus(false, "Gagal terhubung ke server");
     }
   }
 
-  function updateSyncStatus(connected) {
+  function updateSyncStatus(connected, detail) {
     const el = document.getElementById("sync-status");
     if (!el) return;
     if (connected) {
-      el.innerHTML = '<i class="fa-solid fa-circle" style="color:#25d366;"></i> Status: tersinkronisasi via Supabase';
+      el.innerHTML = '<i class="fa-solid fa-circle" style="color:#25d366;"></i> Status: ' + (detail || "tersinkronisasi via Supabase");
       el.style.color = "#25d366";
     } else {
-      el.innerHTML = '<i class="fa-solid fa-circle" style="color:var(--text-muted);"></i> Status: localStorage (server tidak dikonfigurasi)';
+      el.innerHTML = '<i class="fa-solid fa-circle" style="color:var(--text-muted);"></i> Status: localStorage' + (detail ? " (" + detail + ")" : " (server tidak dikonfigurasi)");
       el.style.color = "var(--text-muted)";
     }
+  }
+
+  // --- TEST SUPABASE CONNECTION ---
+  const btnTestDb = document.getElementById("btn-test-db");
+  const dbTestResult = document.getElementById("db-test-result");
+  if (btnTestDb) {
+    btnTestDb.addEventListener("click", async () => {
+      btnTestDb.disabled = true;
+      btnTestDb.innerHTML = '<i class="fa-solid fa-spinner fa-spin"></i> Testing...';
+      dbTestResult.innerHTML = "";
+      try {
+        const res = await fetch("/.netlify/functions/sync-products?action=test");
+        const data = await res.json();
+        let html = "<div style='font-size:13px; line-height:1.8;'>";
+        if (data.hasUrl && data.hasKey) {
+          html += "<div style='color:#25d366;'><i class='fa-solid fa-check-circle'></i> Environment variables terdeteksi</div>";
+          html += "<div style='color:var(--text-muted); font-size:12px;'>URL: " + data.urlPrefix + "</div>";
+          html += "<div style='color:var(--text-muted); font-size:12px;'>Key: " + data.keyPrefix + "</div>";
+          if (data.tableExists) {
+            html += "<div style='color:#25d366;'><i class='fa-solid fa-check-circle'></i> Table app_data ditemukan</div>";
+            html += "<div style='color:var(--text-muted); font-size:12px;'>Row: " + data.rowCount + ", hasData: " + data.hasData + "</div>";
+            if (data.hasData) {
+              html += "<div style='color:#25d366;'><i class='fa-solid fa-check-circle'></i> Data produk tersedia di database</div>";
+            } else {
+              html += "<div style='color:var(--text-muted);'><i class='fa-solid fa-info-circle'></i> Table kosong — akan terisi saat admin melakukan perubahan produk</div>";
+            }
+          } else {
+            html += "<div style='color:#ff6b6b;'><i class='fa-solid fa-times-circle'></i> Table app_data tidak ditemukan! Error: " + (data.error || "?") + "</div>";
+            html += "<div style='color:var(--text-muted); font-size:12px;'>Jalankan SQL di SQL Editor Supabase untuk membuat table.</div>";
+          }
+        } else {
+          html += "<div style='color:#ff6b6b;'><i class='fa-solid fa-times-circle'></i> Environment variables belum diset</div>";
+          html += "<div style='color:var(--text-muted); font-size:12px;'>Set SUPABASE_URL dan SUPABASE_SERVICE_KEY di Netlify Dashboard.</div>";
+        }
+        html += "</div>";
+        dbTestResult.innerHTML = html;
+      } catch (err) {
+        dbTestResult.innerHTML = "<div style='color:#ff6b6b;'>Gagal: " + err.message + "</div>";
+      }
+      btnTestDb.disabled = false;
+      btnTestDb.textContent = "Test Koneksi";
+    });
   }
 
   // --- DATA INIT ---

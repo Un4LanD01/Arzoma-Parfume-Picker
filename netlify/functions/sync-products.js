@@ -19,21 +19,71 @@ function verifyToken(token) {
   }
 }
 
+async function supabaseFetch(path, options = {}) {
+  const url = `${SUPABASE_URL}${path}`;
+  const headers = {
+    apikey: SUPABASE_KEY,
+    Authorization: `Bearer ${SUPABASE_KEY}`,
+    "Content-Type": "application/json",
+    ...options.headers
+  };
+  return fetch(url, { ...options, headers });
+}
+
 exports.handler = async (event) => {
-  // GET — public, no auth required (used by public website)
-  if (event.httpMethod === "GET") {
+  const path = new URL(event.rawUrl, `http://localhost`).searchParams;
+  const action = path.get("action");
+
+  // --- DIAGNOSTIC: test Supabase connectivity ---
+  if (action === "test") {
+    const result = {
+      hasUrl: !!SUPABASE_URL,
+      hasKey: !!SUPABASE_KEY,
+      urlPrefix: SUPABASE_URL ? SUPABASE_URL.substring(0, 20) + "..." : "missing",
+      keyPrefix: SUPABASE_KEY ? SUPABASE_KEY.substring(0, 8) + "..." : "missing"
+    };
+    if (SUPABASE_URL && SUPABASE_KEY) {
+      try {
+        const res = await supabaseFetch("/rest/v1/app_data?key=eq.products&select=value&limit=1");
+        result.status = res.status;
+        result.statusText = res.statusText;
+        if (res.ok) {
+          const body = await res.json();
+          result.tableExists = true;
+          result.rowCount = body.length;
+          result.hasData = body.length > 0 && body[0]?.value != null;
+        } else {
+          const errBody = await res.text();
+          result.tableExists = false;
+          result.error = errBody;
+        }
+      } catch (err) {
+        result.error = err.message;
+        result.networkError = true;
+      }
+    }
+    return { statusCode: 200, body: JSON.stringify(result) };
+  }
+
+  // GET — public, no auth required
+  if (event.httpMethod === "GET" && !action) {
     if (!SUPABASE_URL || !SUPABASE_KEY) {
       return { statusCode: 200, body: JSON.stringify({ source: "local", data: null }) };
     }
     try {
-      const res = await fetch(`${SUPABASE_URL}/rest/v1/app_data?key=eq.products&select=value`, {
-        headers: { apikey: SUPABASE_KEY, Authorization: `Bearer ${SUPABASE_KEY}` }
-      });
+      const res = await supabaseFetch("/rest/v1/app_data?key=eq.products&select=value");
+      if (!res.ok) {
+        const errBody = await res.text();
+        console.error("Supabase GET error:", res.status, errBody);
+        return { statusCode: 200, body: JSON.stringify({ source: "local", data: null, error: errBody }) };
+      }
       const rows = await res.json();
       const products = rows?.[0]?.value || null;
+      console.log("Supabase GET success, products:", products ? products.length + " items" : "null");
       return { statusCode: 200, body: JSON.stringify({ source: "server", data: products }) };
     } catch (err) {
-      return { statusCode: 500, body: JSON.stringify({ error: "Failed to fetch from Supabase" }) };
+      console.error("Supabase GET exception:", err.message);
+      return { statusCode: 200, body: JSON.stringify({ source: "local", data: null, error: err.message }) };
     }
   }
 
@@ -50,26 +100,24 @@ exports.handler = async (event) => {
     }
 
     try {
-      // Upsert: if row with key='products' exists, update it; otherwise insert
-      const res = await fetch(`${SUPABASE_URL}/rest/v1/app_data`, {
+      // Upsert using POST with onConflict and merge-duplicates
+      const res = await supabaseFetch("/rest/v1/app_data?onConflict=key", {
         method: "POST",
-        headers: {
-          apikey: SUPABASE_KEY,
-          Authorization: `Bearer ${SUPABASE_KEY}`,
-          "Content-Type": "application/json",
-          Prefer: "resolution=merge-duplicates"
-        },
+        headers: { Prefer: "resolution=merge-duplicates" },
         body: JSON.stringify({ key: "products", value: products })
       });
 
       if (!res.ok) {
         const errText = await res.text();
-        return { statusCode: 500, body: JSON.stringify({ error: errText }) };
+        console.error("Supabase POST error:", res.status, errText);
+        return { statusCode: 200, body: JSON.stringify({ saved: false, error: errText }) };
       }
 
+      console.log("Supabase POST success");
       return { statusCode: 200, body: JSON.stringify({ saved: true }) };
     } catch (err) {
-      return { statusCode: 500, body: JSON.stringify({ error: err.message }) };
+      console.error("Supabase POST exception:", err.message);
+      return { statusCode: 200, body: JSON.stringify({ saved: false, error: err.message }) };
     }
   }
 
