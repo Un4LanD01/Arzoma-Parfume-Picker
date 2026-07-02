@@ -101,7 +101,7 @@ exports.handler = async (event) => {
 
     try {
       // Upsert using POST with onConflict and merge-duplicates
-      const res = await supabaseFetch("/rest/v1/app_data?onConflict=key", {
+      const res = await supabaseFetch('/rest/v1/app_data?onConflict=%22key%22', {
         method: "POST",
         headers: { Prefer: "resolution=merge-duplicates" },
         body: JSON.stringify({ key: "products", value: products })
