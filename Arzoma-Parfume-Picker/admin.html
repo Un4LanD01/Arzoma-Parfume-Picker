@@ -224,8 +224,7 @@
 <section class="login-section" id="login-screen">
   <div class="login-card glass">
     <h1><i class="fa-solid fa-wind" style="color:var(--primary-gold)"></i> ARZOMA</h1>
-      <p>Admin Dashboard — Masuk untuk mengelola database parfum<br>
-      <span style="font-size:12px; color:var(--text-muted);">Default: admin / admin123 (berlaku di semua perangkat)</span></p>
+    <p>Admin Dashboard — Masuk untuk mengelola database parfum</p>
     <form id="login-form" style="text-align:left;">
       <div class="form-group">
         <label for="login-username">Username</label>
@@ -390,28 +389,7 @@
         </div>
       </div>
       <div class="admin-card glass" style="padding:25px; max-width:500px; margin-top:20px;">
-        <h3><i class="fa-solid fa-brain"></i> Gemini AI — API Key</h3>
-        <p style="font-size:13px; color:var(--text-muted); margin-bottom:15px;">
-          Dapatkan API key gratis di <a href="https://aistudio.google.com/apikey" target="_blank" style="color:var(--primary-gold);">aistudio.google.com/apikey</a>.
-          Key ini akan digunakan untuk AI chat assistant dan enhanced description di website.
-          <strong style="color:var(--primary-gold);">Batasi key ke domain Anda saja</strong> di Google Cloud Console.
-        </p>
-        <div style="display:flex; gap:10px;">
-          <input type="text" id="gemini-key-input" class="form-control" placeholder="AIzaSy..." style="flex:1; font-family:monospace;">
-          <button id="btn-save-gemini-key" class="btn-primary" style="padding:12px 20px; font-size:12px; white-space:nowrap;">
-            Simpan
-          </button>
-        </div>
-        <div style="margin-top:10px;">
-          <span id="gemini-key-status" style="font-size:12px; color:var(--text-muted);"></span>
-        </div>
-      </div>
-      <div class="admin-card glass" style="padding:25px; max-width:500px; margin-top:20px;">
         <h3><i class="fa-solid fa-lock"></i> Ubah Password Admin</h3>
-        <p style="font-size:13px; color:var(--text-muted); margin-bottom:15px;">
-          Default universal <strong>admin / admin123</strong> selalu bisa dipakai di perangkat mana pun.
-          Ubah password di sini hanya berlaku untuk perangkat ini.
-        </p>
         <form id="change-password-form" style="margin-top:15px;">
           <div class="form-group">
             <label for="current-password">Password Saat Ini</label>
@@ -431,7 +409,6 @@
 </div>
 
 <script src="ai.js"></script>
-<script src="ai-integration.js"></script>
 <script src="admin.js"></script>
 </body>
 </html>

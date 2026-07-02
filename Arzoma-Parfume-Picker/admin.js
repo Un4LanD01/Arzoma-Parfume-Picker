@@ -31,9 +31,6 @@ document.addEventListener("DOMContentLoaded", () => {
 
   // --- AUTH SYSTEM ---
   const AUTH_KEY = "arzoma_admin_auth";
-  // Universal default admin — works on EVERY device
-  const DEFAULT_ADMIN_USER = "admin";
-  const DEFAULT_ADMIN_PASS = "admin123";
 
   function isLoggedIn() {
     const data = localStorage.getItem(AUTH_KEY);
@@ -49,6 +46,7 @@ document.addEventListener("DOMContentLoaded", () => {
     } else {
       loginScreen.style.display = "flex";
       adminDashboard.style.display = "none";
+      // Check if this is first setup
       const data = localStorage.getItem(AUTH_KEY);
       if (!data) {
         setupHint.style.display = "block";
@@ -58,17 +56,11 @@ document.addEventListener("DOMContentLoaded", () => {
     }
   }
 
-  function loginSuccess() {
-    const authData = { authenticated: true, username: btoa(DEFAULT_ADMIN_USER), password: btoa(DEFAULT_ADMIN_PASS) };
-    localStorage.setItem(AUTH_KEY, JSON.stringify(authData));
-    loginError.style.display = "none";
-    checkAuth();
-  }
-
   loginForm.addEventListener("submit", (e) => {
     e.preventDefault();
     const username = document.getElementById("login-username").value.trim();
     const password = document.getElementById("login-password").value.trim();
+    const existing = localStorage.getItem(AUTH_KEY);
     
     if (!username || !password) {
       loginError.textContent = "Username dan password wajib diisi.";
@@ -76,32 +68,29 @@ document.addEventListener("DOMContentLoaded", () => {
       return;
     }
 
-    // Check universal default credentials FIRST (works on every device)
-    if (username === DEFAULT_ADMIN_USER && password === DEFAULT_ADMIN_PASS) {
-      loginSuccess();
-      return;
-    }
-
-    // Fallback: check stored credentials (for users who changed password locally)
-    const existing = localStorage.getItem(AUTH_KEY);
-    if (existing) {
-      const authData = JSON.parse(existing);
-      if (btoa(username) === authData.username && btoa(password) === authData.password) {
-        authData.authenticated = true;
-        localStorage.setItem(AUTH_KEY, JSON.stringify(authData));
-        loginSuccess();
-        return;
-      }
-    }
-
-    // If no stored credentials yet, first-time setup
     if (!existing) {
-      loginSuccess();
+      // First time: create account
+      const authData = {
+        authenticated: true,
+        username: btoa(username),
+        password: btoa(password)
+      };
+      localStorage.setItem(AUTH_KEY, JSON.stringify(authData));
+      loginError.style.display = "none";
+      checkAuth();
       return;
     }
 
-    loginError.textContent = "Username atau password salah. Coba: admin / admin123";
-    loginError.style.display = "block";
+    const authData = JSON.parse(existing);
+    if (btoa(username) === authData.username && btoa(password) === authData.password) {
+      authData.authenticated = true;
+      localStorage.setItem(AUTH_KEY, JSON.stringify(authData));
+      loginError.style.display = "none";
+      checkAuth();
+    } else {
+      loginError.textContent = "Username atau password salah.";
+      loginError.style.display = "block";
+    }
   });
 
   btnLogout.addEventListener("click", () => {
@@ -119,17 +108,14 @@ document.addEventListener("DOMContentLoaded", () => {
     e.preventDefault();
     const currentPw = document.getElementById("current-password").value;
     const newPw = document.getElementById("new-password").value;
-    // Allow change with either stored OR default password
     const data = JSON.parse(localStorage.getItem(AUTH_KEY) || "{}");
-    const storedMatch = btoa(currentPw) === (data.password || "");
-    const defaultMatch = currentPw === DEFAULT_ADMIN_PASS;
-    if (!storedMatch && !defaultMatch) {
+    if (btoa(currentPw) !== data.password) {
       alert("Password saat ini salah!");
       return;
     }
     data.password = btoa(newPw);
     localStorage.setItem(AUTH_KEY, JSON.stringify(data));
-    alert("Password berhasil diubah! Default admin (admin/admin123) tetap bisa dipakai di perangkat lain.");
+    alert("Password berhasil diubah!");
     changePasswordForm.reset();
   });
 
@@ -160,7 +146,6 @@ document.addEventListener("DOMContentLoaded", () => {
     if (!storedAnalytics) localStorage.setItem("arzoma_analytics", JSON.stringify(quizAnalytics));
 
     if (waInput) waInput.value = localStorage.getItem("arzoma_wa") || "628123456789";
-    loadGeminiKey();
     
     renderProductsTable();
     updateAnalyticsView();
@@ -298,31 +283,6 @@ document.addEventListener("DOMContentLoaded", () => {
     cancelEdit();
     renderProductsTable();
   });
-
-  // --- GEMINI KEY ---
-  const geminiKeyInput = document.getElementById("gemini-key-input");
-  const btnSaveGeminiKey = document.getElementById("btn-save-gemini-key");
-  const geminiKeyStatus = document.getElementById("gemini-key-status");
-
-  function loadGeminiKey() {
-    const key = localStorage.getItem("arzoma_gemini_key") || "";
-    if (geminiKeyInput) geminiKeyInput.value = key;
-    if (geminiKeyStatus) {
-      geminiKeyStatus.textContent = key ? "API Key tersimpan" : "Belum diatur";
-      geminiKeyStatus.style.color = key ? "#25d366" : "var(--text-muted)";
-    }
-  }
-
-  if (btnSaveGeminiKey) {
-    btnSaveGeminiKey.addEventListener("click", () => {
-      const val = geminiKeyInput.value.trim();
-      if (val) {
-        localStorage.setItem("arzoma_gemini_key", val);
-        loadGeminiKey();
-        alert("API Key Gemini berhasil disimpan!");
-      }
-    });
-  }
 
   // --- WA SAVE ---
   btnSaveWA.addEventListener("click", () => {
