@@ -1,0 +1,432 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Arzoma Admin Dashboard</title>
+  <meta name="robots" content="noindex, nofollow">
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+  <link rel="stylesheet" href="style.css">
+  <style>
+    .login-section {
+      min-height: 100vh;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      padding: 24px;
+    }
+    .login-card {
+      max-width: 420px;
+      width: 100%;
+      padding: 40px;
+      text-align: center;
+    }
+    .login-card h1 {
+      font-size: 28px;
+      margin-bottom: 8px;
+    }
+    .login-card p {
+      color: var(--text-muted);
+      font-size: 14px;
+      margin-bottom: 30px;
+    }
+    .login-error {
+      color: #ff6b6b;
+      font-size: 13px;
+      margin-top: 10px;
+      display: none;
+    }
+    .admin-layout {
+      display: flex;
+      min-height: 100vh;
+    }
+    .admin-sidebar {
+      width: 250px;
+      background: rgba(10,10,10,0.95);
+      border-right: 1px solid var(--border-gold);
+      padding: 30px 20px;
+      display: flex;
+      flex-direction: column;
+      position: fixed;
+      top: 0;
+      left: 0;
+      height: 100vh;
+      z-index: 50;
+    }
+    .admin-sidebar .brand {
+      font-family: var(--font-serif);
+      font-size: 20px;
+      margin-bottom: 30px;
+      display: flex;
+      align-items: center;
+      gap: 10px;
+    }
+    .admin-sidebar .brand i {
+      color: var(--primary-gold);
+    }
+    .admin-sidebar nav {
+      display: flex;
+      flex-direction: column;
+      gap: 5px;
+      flex: 1;
+    }
+    .admin-sidebar nav a {
+      color: var(--text-muted);
+      text-decoration: none;
+      padding: 12px 16px;
+      border-radius: 8px;
+      font-size: 14px;
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      transition: var(--transition-smooth);
+    }
+    .admin-sidebar nav a:hover,
+    .admin-sidebar nav a.active {
+      background: rgba(212,175,55,0.1);
+      color: var(--primary-gold);
+    }
+    .admin-sidebar nav a i {
+      width: 20px;
+      text-align: center;
+    }
+    .admin-main {
+      flex: 1;
+      margin-left: 250px;
+      padding: 40px;
+    }
+    .admin-main h2 {
+      font-size: 28px;
+      margin-bottom: 8px;
+    }
+    .admin-main > p {
+      color: var(--text-muted);
+      margin-bottom: 30px;
+    }
+    .admin-logout {
+      margin-top: auto;
+      background: transparent;
+      border: 1px solid rgba(255,255,255,0.1);
+      color: var(--text-muted);
+      padding: 12px 16px;
+      border-radius: 8px;
+      cursor: pointer;
+      font-size: 13px;
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      transition: var(--transition-smooth);
+    }
+    .admin-logout:hover {
+      border-color: #dc3545;
+      color: #ff6b6b;
+    }
+    .admin-grid {
+      display: grid;
+      grid-template-columns: 1fr 1.2fr;
+      gap: 30px;
+    }
+    .admin-card {
+      padding: 30px;
+    }
+    .admin-card h3 {
+      font-size: 18px;
+      margin-bottom: 20px;
+      display: flex;
+      align-items: center;
+      gap: 10px;
+    }
+    .admin-card h3 i {
+      color: var(--primary-gold);
+    }
+    .page-section {
+      display: none;
+    }
+    .page-section.active {
+      display: block;
+    }
+    .admin-table {
+      width: 100%;
+      border-collapse: collapse;
+      font-size: 13px;
+    }
+    .admin-table th {
+      text-align: left;
+      padding: 10px 12px;
+      color: var(--primary-gold);
+      border-bottom: 1px solid var(--border-gold);
+      font-weight: 600;
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
+    }
+    .admin-table td {
+      padding: 10px 12px;
+      border-bottom: 1px solid rgba(255,255,255,0.03);
+      vertical-align: middle;
+    }
+    .admin-table tr:hover td {
+      background: rgba(212,175,55,0.03);
+    }
+    .admin-table .actions {
+      display: flex;
+      gap: 8px;
+    }
+    .admin-table .actions button {
+      background: transparent;
+      border: none;
+      cursor: pointer;
+      color: var(--text-muted);
+      font-size: 14px;
+      transition: var(--transition-smooth);
+      padding: 4px;
+    }
+    .admin-table .actions .edit-btn:hover { color: var(--primary-gold); }
+    .admin-table .actions .delete-btn:hover { color: #dc3545; }
+    .badge-category {
+      display: inline-block;
+      padding: 2px 10px;
+      border-radius: 12px;
+      font-size: 11px;
+      border: 1px solid var(--border-gold);
+      color: var(--primary-gold);
+    }
+    @media (max-width: 900px) {
+      .admin-sidebar { width: 60px; padding: 20px 10px; }
+      .admin-sidebar .brand span { display: none; }
+      .admin-sidebar nav a span { display: none; }
+      .admin-main { margin-left: 60px; padding: 20px; }
+      .admin-grid { grid-template-columns: 1fr; }
+    }
+    @media (max-width: 600px) {
+      .admin-sidebar { width: 50px; padding: 15px 8px; }
+      .admin-main { margin-left: 50px; padding: 15px; }
+      .admin-table { font-size: 12px; }
+      .admin-table th:nth-child(3),
+      .admin-table td:nth-child(3) { display: none; }
+    }
+    @media (max-width: 480px) {
+      .admin-main { margin-left: 0; padding: 15px; padding-top: 70px; }
+      .admin-sidebar { width: 100%; height: auto; flex-direction: row; padding: 10px 15px; top: 0; left: 0; }
+      .admin-sidebar .brand { display: none; }
+      .admin-sidebar nav { flex-direction: row; gap: 5px; overflow-x: auto; -webkit-overflow-scrolling: touch; }
+      .admin-sidebar nav a { padding: 8px 12px; font-size: 11px; white-space: nowrap; }
+      .admin-sidebar nav a span { display: inline; }
+      .admin-card { padding: 15px; }
+      .form-control { font-size: 16px; }
+      .login-card { padding: 24px 20px; }
+      .login-card h1 { font-size: 22px; }
+    }
+  </style>
+</head>
+<body>
+
+<!-- Login Screen -->
+<section class="login-section" id="login-screen">
+  <div class="login-card glass">
+    <h1><i class="fa-solid fa-wind" style="color:var(--primary-gold)"></i> ARZOMA</h1>
+    <p>Admin Dashboard — Masuk untuk mengelola database parfum</p>
+    <form id="login-form" style="text-align:left;">
+      <div class="form-group">
+        <label for="login-username">Username</label>
+        <input type="text" id="login-username" class="form-control" placeholder="admin" required>
+      </div>
+      <div class="form-group">
+        <label for="login-password">Password</label>
+        <input type="password" id="login-password" class="form-control" placeholder="password" required>
+      </div>
+      <div id="setup-hint" style="display:none; font-size:12px; color:var(--primary-gold); margin-bottom:15px;">
+        <i class="fa-solid fa-info-circle"></i> Belum ada akun. Isi form di atas untuk membuat akun admin baru.
+      </div>
+      <div class="login-error" id="login-error"></div>
+      <button type="submit" class="btn-primary" style="width:100%; justify-content:center; margin-top:5px;">
+        Masuk <i class="fa-solid fa-arrow-right-to-bracket"></i>
+      </button>
+    </form>
+    <div style="margin-top:20px; font-size:12px; color:var(--text-muted);">
+      <a href="index.html" style="color:var(--primary-gold);">&larr; Kembali ke Website</a>
+    </div>
+  </div>
+</section>
+
+<!-- Admin Dashboard -->
+<div class="admin-layout" id="admin-dashboard" style="display:none;">
+  <aside class="admin-sidebar">
+    <div class="brand"><i class="fa-solid fa-wind"></i> <span>ARZOMA</span></div>
+    <nav>
+      <a href="#" class="active" data-page="products"><i class="fa-solid fa-box"></i> <span>Produk</span></a>
+      <a href="#" data-page="add-product"><i class="fa-solid fa-plus"></i> <span>Tambah Produk</span></a>
+      <a href="#" data-page="analytics"><i class="fa-solid fa-chart-line"></i> <span>Analytics</span></a>
+      <a href="#" data-page="settings"><i class="fa-solid fa-gear"></i> <span>Pengaturan</span></a>
+    </nav>
+    <button class="admin-logout" id="btn-logout"><i class="fa-solid fa-right-from-bracket"></i> Logout</button>
+  </aside>
+
+  <main class="admin-main">
+    <!-- Products List -->
+    <div class="page-section active" id="page-products">
+      <h2><i class="fa-solid fa-box"></i> Kelola Produk</h2>
+      <p>Semua parfum dalam database — klik edit atau hapus langsung dari tabel.</p>
+      <div class="admin-card glass" style="overflow-x:auto; padding:0;">
+        <table class="admin-table" id="admin-products-table">
+          <thead>
+            <tr><th>Nama</th><th>Harga</th><th>Kategori</th><th>Top / Mid / Base</th><th>Aksi</th></tr>
+          </thead>
+          <tbody id="admin-products-body"></tbody>
+        </table>
+      </div>
+    </div>
+
+    <!-- Add/Edit Product -->
+    <div class="page-section" id="page-add-product">
+      <h2><i class="fa-solid fa-plus"></i> <span id="form-title">Tambah Produk Baru</span></h2>
+      <p>Lengkapi data parfum untuk ditambahkan ke database dan dikenali oleh AI.</p>
+      <div class="admin-card glass">
+        <form id="admin-product-form">
+          <input type="hidden" id="form-product-id">
+          <div class="form-group">
+            <label for="prod-name">Nama Parfum</label>
+            <input type="text" id="prod-name" class="form-control" placeholder="Contoh: Arzoma Flora Breeze" required>
+          </div>
+          <div class="form-group">
+            <label for="prod-price">Harga (IDR)</label>
+            <input type="number" id="prod-price" class="form-control" placeholder="Contoh: 185000" required>
+          </div>
+          <div class="form-group">
+            <label for="prod-category">Kategori Utama</label>
+            <select id="prod-category" class="form-control">
+              <option value="Fresh">Fresh</option>
+              <option value="Sweet">Sweet</option>
+              <option value="Woody">Woody</option>
+              <option value="Floral">Floral</option>
+            </select>
+          </div>
+          <div class="form-group">
+            <label for="prod-top-notes">Top Notes (Pisahkan koma)</label>
+            <input type="text" id="prod-top-notes" class="form-control" placeholder="Contoh: Bergamot, Lemon, Citrus" required>
+          </div>
+          <div class="form-group">
+            <label for="prod-mid-notes">Middle Notes (Heart — Pisahkan koma)</label>
+            <input type="text" id="prod-mid-notes" class="form-control" placeholder="Contoh: Jasmine, Rose, Lavender" required>
+          </div>
+          <div class="form-group">
+            <label for="prod-base-notes">Base Notes (Pisahkan koma)</label>
+            <input type="text" id="prod-base-notes" class="form-control" placeholder="Contoh: Musk, Vanilla, Amber" required>
+          </div>
+          <div class="form-group">
+            <label for="prod-moods">Mood Tags (Kuis - Pisahkan koma)</label>
+            <input type="text" id="prod-moods" class="form-control" placeholder="Contoh: pantai, segar, santai">
+          </div>
+          <div class="form-group">
+            <label for="prod-ootds">OOTD Tags (Kuis - Pisahkan koma)</label>
+            <input type="text" id="prod-ootds" class="form-control" placeholder="Contoh: casual, sporty, formal">
+          </div>
+          <div class="form-group">
+            <label for="prod-dupes">Dupe Reference (Merk luar yang mirip)</label>
+            <input type="text" id="prod-dupes" class="form-control" placeholder="Contoh: Black Opium, Sauvage">
+          </div>
+          <div class="form-group">
+            <label for="prod-desc">Deskripsi Singkat</label>
+            <textarea id="prod-desc" class="form-control" rows="3" placeholder="Deskripsi wangi parfum..."></textarea>
+          </div>
+          <div class="form-group">
+            <label for="prod-image">URL Gambar (biarkan kosong untuk default)</label>
+            <input type="url" id="prod-image" class="form-control" placeholder="https://...jpg">
+          </div>
+          <div style="display:flex; gap:10px;">
+            <button type="submit" class="btn-primary" style="flex:1; justify-content:center;">
+              Simpan <i class="fa-solid fa-floppy-disk"></i>
+            </button>
+            <button type="button" class="btn-secondary" id="btn-cancel-edit" style="display:none;">
+              Batal <i class="fa-solid fa-xmark"></i>
+            </button>
+          </div>
+        </form>
+      </div>
+    </div>
+
+    <!-- Analytics -->
+    <div class="page-section" id="page-analytics">
+      <h2><i class="fa-solid fa-chart-line"></i> Analisis Tren Kuis</h2>
+      <p>Data preferensi aroma dan mood yang paling sering dipilih pengunjung.</p>
+      <div class="admin-grid">
+        <div class="admin-card glass" style="padding:25px;">
+          <h3>Ringkasan</h3>
+          <div style="display:grid; grid-template-columns:1fr 1fr; gap:15px;">
+            <div class="stat-card glass" style="padding:20px; text-align:center;">
+              <div class="value" id="stat-total-quizzes" style="font-size:36px; font-family:var(--font-serif); color:var(--primary-gold);">0</div>
+              <div style="font-size:12px; color:var(--text-muted); text-transform:uppercase;">Total Kuis</div>
+            </div>
+            <div class="stat-card glass" style="padding:20px; text-align:center;">
+              <div class="value" id="stat-most-matched" style="font-size:18px; font-family:var(--font-serif); color:var(--primary-gold);">-</div>
+              <div style="font-size:12px; color:var(--text-muted); text-transform:uppercase;">Terbanyak Diresomendasikan</div>
+            </div>
+          </div>
+        </div>
+        <div class="admin-card glass" style="padding:25px;">
+          <h3>Grafik Popularitas</h3>
+          <div class="chart-bars-list" id="analytics-chart-bars"></div>
+        </div>
+      </div>
+      <button id="btn-reset-analytics" class="btn-secondary" style="margin-top:20px; border-color:rgba(220,53,69,0.3); color:#ff6b6b;">
+        Reset Semua Data <i class="fa-solid fa-rotate-left"></i>
+      </button>
+    </div>
+
+    <!-- Settings -->
+    <div class="page-section" id="page-settings">
+      <h2><i class="fa-solid fa-gear"></i> Pengaturan Toko</h2>
+      <p>Konfigurasi dasar untuk toko Arzoma Anda.</p>
+      <div class="admin-card glass" style="padding:25px; max-width:500px;">
+        <h3><i class="fa-brands fa-whatsapp"></i> Nomor WhatsApp</h3>
+        <p style="font-size:13px; color:var(--text-muted); margin-bottom:15px;">
+          Nomor ini akan digunakan untuk semua tombol "Pesan via WhatsApp" di website.
+        </p>
+        <div style="display:flex; gap:10px;">
+          <input type="text" id="wa-number-input" class="form-control" placeholder="628123456789" style="flex:1;">
+          <button id="btn-save-wa" class="btn-primary" style="padding:12px 20px; font-size:12px; white-space:nowrap;">
+            Simpan
+          </button>
+        </div>
+      </div>
+      <div class="admin-card glass" style="padding:25px; max-width:500px; margin-top:20px;">
+        <h3><i class="fa-solid fa-brain"></i> Gemini AI — API Key</h3>
+        <p style="font-size:13px; color:var(--text-muted); margin-bottom:15px;">
+          Dapatkan API key gratis di <a href="https://aistudio.google.com/apikey" target="_blank" style="color:var(--primary-gold);">aistudio.google.com/apikey</a>.
+          Key ini akan digunakan untuk AI chat assistant dan enhanced description di website.
+          <strong style="color:var(--primary-gold);">Batasi key ke domain Anda saja</strong> di Google Cloud Console.
+        </p>
+        <div style="display:flex; gap:10px;">
+          <input type="text" id="gemini-key-input" class="form-control" placeholder="AIzaSy..." style="flex:1; font-family:monospace;">
+          <button id="btn-save-gemini-key" class="btn-primary" style="padding:12px 20px; font-size:12px; white-space:nowrap;">
+            Simpan
+          </button>
+        </div>
+        <div style="margin-top:10px;">
+          <span id="gemini-key-status" style="font-size:12px; color:var(--text-muted);"></span>
+        </div>
+      </div>
+      <div class="admin-card glass" style="padding:25px; max-width:500px; margin-top:20px;">
+        <h3><i class="fa-solid fa-lock"></i> Ubah Password Admin</h3>
+        <form id="change-password-form" style="margin-top:15px;">
+          <div class="form-group">
+            <label for="current-password">Password Saat Ini</label>
+            <input type="password" id="current-password" class="form-control" required>
+          </div>
+          <div class="form-group">
+            <label for="new-password">Password Baru</label>
+            <input type="password" id="new-password" class="form-control" required>
+          </div>
+          <button type="submit" class="btn-primary" style="justify-content:center;">
+            Ubah Password <i class="fa-solid fa-key"></i>
+          </button>
+        </form>
+      </div>
+    </div>
+  </main>
+</div>
+
+<script src="ai.js"></script>
+<script src="ai-integration.js"></script>
+<script src="admin.js"></script>
+</body>
+</html>
