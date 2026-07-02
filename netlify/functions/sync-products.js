@@ -100,10 +100,15 @@ exports.handler = async (event) => {
     }
 
     try {
-      // Upsert using POST with onConflict and merge-duplicates
-      const res = await supabaseFetch('/rest/v1/app_data?onConflict=%22key%22', {
+      // Delete existing row
+      await supabaseFetch("/rest/v1/app_data?key=eq.products", {
+        method: "DELETE"
+      });
+
+      // Insert fresh row
+      const res = await supabaseFetch("/rest/v1/app_data", {
         method: "POST",
-        headers: { Prefer: "resolution=merge-duplicates" },
+        headers: { Prefer: "return=representation" },
         body: JSON.stringify({ key: "products", value: products })
       });
 

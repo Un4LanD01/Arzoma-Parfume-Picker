@@ -1,2 +1,8 @@
 Arzoma-Parfume-Picker/
 Pricelist.xlsx
+
+# Dependencies
+node_modules/
+.agents/
+package-lock.json
+skills-lock.json
