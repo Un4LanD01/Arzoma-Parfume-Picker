@@ -44,6 +44,7 @@ document.addEventListener("DOMContentLoaded", () => {
           loginScreen.style.display = "none";
           adminDashboard.style.display = "flex";
           initData();
+          fetchGeminiKeyFromServer();
           return true;
         }
       } catch {}
@@ -268,29 +269,39 @@ document.addEventListener("DOMContentLoaded", () => {
     renderProductsTable();
   });
 
-  // --- GEMINI KEY ---
-  const geminiKeyInput = document.getElementById("gemini-key-input");
-  const btnSaveGeminiKey = document.getElementById("btn-save-gemini-key");
+  // --- GEMINI KEY (auto-fetched from server) ---
   const geminiKeyStatus = document.getElementById("gemini-key-status");
+
+  async function fetchGeminiKeyFromServer() {
+    const token = localStorage.getItem("arzoma_admin_token");
+    if (!token) return;
+    try {
+      const res = await fetch("/.netlify/functions/get-gemini-key", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ token })
+      });
+      const data = await res.json();
+      if (data.key) {
+        localStorage.setItem("arzoma_gemini_key", data.key);
+      } else {
+        localStorage.removeItem("arzoma_gemini_key");
+      }
+    } catch {}
+    loadGeminiKey();
+  }
 
   function loadGeminiKey() {
     const key = localStorage.getItem("arzoma_gemini_key") || "";
-    if (geminiKeyInput) geminiKeyInput.value = key;
     if (geminiKeyStatus) {
-      geminiKeyStatus.textContent = key ? "API Key tersimpan" : "Belum diatur";
-      geminiKeyStatus.style.color = key ? "#25d366" : "var(--text-muted)";
-    }
-  }
-
-  if (btnSaveGeminiKey) {
-    btnSaveGeminiKey.addEventListener("click", () => {
-      const val = geminiKeyInput.value.trim();
-      if (val) {
-        localStorage.setItem("arzoma_gemini_key", val);
-        loadGeminiKey();
-        alert("API Key Gemini berhasil disimpan!");
+      if (key) {
+        geminiKeyStatus.textContent = "Key tersimpan (dari server)";
+        geminiKeyStatus.style.color = "#25d366";
+      } else {
+        geminiKeyStatus.textContent = "Belum diatur — set GEMINI_API_KEY di Netlify env vars";
+        geminiKeyStatus.style.color = "var(--text-muted)";
       }
-    });
+    }
   }
 
   // --- WA SAVE ---

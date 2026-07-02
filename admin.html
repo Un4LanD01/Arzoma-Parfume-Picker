@@ -387,19 +387,15 @@
       </div>
       <div class="admin-card glass" style="padding:25px; max-width:500px; margin-top:20px;">
         <h3><i class="fa-solid fa-brain"></i> Gemini AI — API Key</h3>
-        <p style="font-size:13px; color:var(--text-muted); margin-bottom:15px;">
-          Dapatkan API key gratis di <a href="https://aistudio.google.com/apikey" target="_blank" style="color:var(--primary-gold);">aistudio.google.com/apikey</a>.
-          Key ini akan digunakan untuk AI chat assistant dan enhanced description di website.
-          <strong style="color:var(--primary-gold);">Batasi key ke domain Anda saja</strong> di Google Cloud Console.
+        <p style="font-size:13px; color:var(--text-muted); margin-bottom:10px;">
+          API Key Gemini otomatis diambil dari server setelah login. Tidak perlu memasukkan manual di tiap perangkat.
         </p>
-        <div style="display:flex; gap:10px;">
-          <input type="text" id="gemini-key-input" class="form-control" placeholder="AIzaSy..." style="flex:1; font-family:monospace;">
-          <button id="btn-save-gemini-key" class="btn-primary" style="padding:12px 20px; font-size:12px; white-space:nowrap;">
-            Simpan
-          </button>
-        </div>
-        <div style="margin-top:10px;">
-          <span id="gemini-key-status" style="font-size:12px; color:var(--text-muted);"></span>
+        <p style="font-size:13px; color:var(--text-muted); margin-bottom:15px;">
+          <strong style="color:var(--primary-gold);">Cara setting:</strong> Tambah <code style="background:rgba(255,255,255,0.05); padding:2px 6px; border-radius:4px;">GEMINI_API_KEY</code> sebagai Environment Variable di dashboard Netlify.
+          Dapatkan key gratis di <a href="https://aistudio.google.com/apikey" target="_blank" style="color:var(--primary-gold);">aistudio.google.com/apikey</a>.
+        </p>
+        <div>
+          <span id="gemini-key-status" style="font-size:13px;"></span>
         </div>
       </div>
       <div class="admin-card glass" style="padding:25px; max-width:500px; margin-top:20px;">
