@@ -43,7 +43,7 @@ document.addEventListener("DOMContentLoaded", () => {
         if (data.valid) {
           loginScreen.style.display = "none";
           adminDashboard.style.display = "flex";
-          initData();
+          await initData();
           fetchGeminiKeyFromServer();
           return true;
         }
@@ -103,8 +103,61 @@ document.addEventListener("DOMContentLoaded", () => {
     document.querySelector("#login-form button").textContent = "Masuk";
   });
 
+  // --- SERVER SYNC ---
+  async function fetchProductsFromServer() {
+    try {
+      const res = await fetch("/.netlify/functions/sync-products");
+      const data = await res.json();
+      if (data.source === "server" && Array.isArray(data.data) && data.data.length > 0) {
+        perfumes = data.data;
+        localStorage.setItem("arzoma_perfumes", JSON.stringify(perfumes));
+        updateSyncStatus(true);
+        return true;
+      }
+    } catch {}
+    updateSyncStatus(false);
+    return false;
+  }
+
+  async function syncProductsToServer() {
+    const token = localStorage.getItem(TOKEN_KEY);
+    if (!token) return;
+    try {
+      const res = await fetch("/.netlify/functions/sync-products", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ token, products: perfumes })
+      });
+      const data = await res.json();
+      updateSyncStatus(data.saved === true);
+    } catch {
+      updateSyncStatus(false);
+    }
+  }
+
+  function updateSyncStatus(connected) {
+    const el = document.getElementById("sync-status");
+    if (!el) return;
+    if (connected) {
+      el.innerHTML = '<i class="fa-solid fa-circle" style="color:#25d366;"></i> Status: tersinkronisasi via Supabase';
+      el.style.color = "#25d366";
+    } else {
+      el.innerHTML = '<i class="fa-solid fa-circle" style="color:var(--text-muted);"></i> Status: localStorage (server tidak dikonfigurasi)';
+      el.style.color = "var(--text-muted)";
+    }
+  }
+
   // --- DATA INIT ---
-  function initData() {
+  async function initData() {
+    const token = localStorage.getItem(TOKEN_KEY);
+    
+    // Prefer server data if available (syncs across devices)
+    if (token) {
+      const serverOk = await fetchProductsFromServer();
+      if (serverOk) return;
+    }
+
+    // Fallback to localStorage
     const storedPerfumes = localStorage.getItem("arzoma_perfumes");
     if (storedPerfumes) {
       perfumes = JSON.parse(storedPerfumes);
@@ -187,6 +240,7 @@ document.addEventListener("DOMContentLoaded", () => {
     perfumes = perfumes.filter(x => x.id !== id);
     localStorage.setItem("arzoma_perfumes", JSON.stringify(perfumes));
     renderProductsTable();
+    syncProductsToServer();
   }
 
   function loadProduct(id) {
@@ -267,6 +321,7 @@ document.addEventListener("DOMContentLoaded", () => {
     }
     cancelEdit();
     renderProductsTable();
+    syncProductsToServer();
   });
 
   // --- GEMINI KEY (auto-fetched from server) ---
@@ -314,11 +369,12 @@ document.addEventListener("DOMContentLoaded", () => {
   });
 
   // --- RESET ---
-  btnResetAnalytics.addEventListener("click", () => {
+  btnResetAnalytics.addEventListener("click", async () => {
     if (confirm("Reset semua data produk dan analitik ke bawaan pabrik?")) {
       localStorage.removeItem("arzoma_perfumes");
       localStorage.removeItem("arzoma_analytics");
-      initData();
+      await initData();
+      await syncProductsToServer();
       alert("Semua data berhasil di-reset!");
     }
   });

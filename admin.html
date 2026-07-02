@@ -399,6 +399,36 @@
         </div>
       </div>
       <div class="admin-card glass" style="padding:25px; max-width:500px; margin-top:20px;">
+        <h3><i class="fa-solid fa-database"></i> Sinkronisasi Data Multi-Perangkat</h3>
+        <p style="font-size:13px; color:var(--text-muted); margin-bottom:10px;">
+          Agar data produk sama di semua perangkat, setup <strong>Supabase</strong> (database cloud gratis):
+        </p>
+        <ol style="font-size:13px; color:var(--text-muted); line-height:2; padding-left:20px; margin-bottom:15px;">
+          <li>Buat akun gratis di <a href="https://supabase.com" target="_blank" style="color:var(--primary-gold);">supabase.com</a></li>
+          <li>Buat project baru, buka <strong>SQL Editor</strong> & jalankan:</li>
+        </ol>
+        <pre style="background:rgba(0,0,0,0.3); padding:12px; border-radius:8px; font-size:12px; overflow-x:auto; margin-bottom:15px; color:#c0c0c0;">
+CREATE TABLE app_data (
+  id BIGINT GENERATED ALWAYS AS IDENTITY PRIMARY KEY,
+  key TEXT UNIQUE NOT NULL,
+  value JSONB NOT NULL
+);
+INSERT INTO app_data (key, value) VALUES ('products', '[]');</pre>
+        <p style="font-size:13px; color:var(--text-muted); margin-bottom:10px;">
+          3. Buka <strong>Project Settings &rarr; API</strong>, salin <code style="background:rgba(255,255,255,0.05); padding:2px 6px; border-radius:4px;">Project URL</code> dan <code style="background:rgba(255,255,255,0.05); padding:2px 6px; border-radius:4px;">service_role key</code>
+        </p>
+        <p style="font-size:13px; color:var(--text-muted); margin-bottom:10px;">
+          4. Tambah di Netlify &rarr; Environment variables:
+        </p>
+        <table style="width:100%; font-size:12px; border-collapse:collapse; margin-bottom:15px;">
+          <tr><td style="padding:4px 8px; border:1px solid rgba(255,255,255,0.1);"><code>SUPABASE_URL</code></td><td style="padding:4px 8px; border:1px solid rgba(255,255,255,0.1);">Project URL Anda</td></tr>
+          <tr><td style="padding:4px 8px; border:1px solid rgba(255,255,255,0.1);"><code>SUPABASE_SERVICE_KEY</code></td><td style="padding:4px 8px; border:1px solid rgba(255,255,255,0.1);">service_role key Anda</td></tr>
+        </table>
+        <p style="font-size:13px; color:var(--text-muted);">
+          <span id="sync-status" style="color:var(--text-muted);"><i class="fa-solid fa-circle"></i> Status: localStorage (server tidak dikonfigurasi)</span>
+        </p>
+      </div>
+      <div class="admin-card glass" style="padding:25px; max-width:500px; margin-top:20px;">
         <h3><i class="fa-solid fa-lock"></i> Keamanan Admin</h3>
         <p style="font-size:13px; color:var(--text-muted); margin-bottom:10px;">
           Login admin sekarang diverifikasi via <strong>Netlify Functions</strong> (server-side).
