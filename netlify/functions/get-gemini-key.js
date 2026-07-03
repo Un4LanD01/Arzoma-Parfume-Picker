@@ -30,10 +30,19 @@ exports.handler = async (event) => {
       return { statusCode: 401, body: JSON.stringify({ error: "Unauthorized" }) };
     }
 
+    const provider = process.env.AI_PROVIDER || "gemini";
     const geminiKey = process.env.GEMINI_API_KEY || "";
+    const deepseekKey = process.env.DEEPSEEK_API_KEY || "";
+    const groqKey = process.env.GROQ_API_KEY || "";
+
+    let key = "";
+    if (provider === "deepseek") key = deepseekKey;
+    else if (provider === "groq") key = groqKey;
+    else key = geminiKey;
+
     return {
       statusCode: 200,
-      body: JSON.stringify({ key: geminiKey })
+      body: JSON.stringify({ key, provider })
     };
   } catch (err) {
     return { statusCode: 500, body: JSON.stringify({ error: "Internal server error" }) };

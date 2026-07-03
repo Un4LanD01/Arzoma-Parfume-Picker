@@ -232,7 +232,7 @@ document.addEventListener("DOMContentLoaded", () => {
     if (!storedAnalytics) localStorage.setItem("arzoma_analytics", JSON.stringify(quizAnalytics));
 
     if (waInput) waInput.value = localStorage.getItem("arzoma_wa") || "628123456789";
-    loadGeminiKey();
+    loadAIKey();
     
     renderProductsTable();
     updateAnalyticsView();
@@ -373,8 +373,9 @@ document.addEventListener("DOMContentLoaded", () => {
     syncProductsToServer();
   });
 
-  // --- GEMINI KEY (auto-fetched from server) ---
+  // --- AI KEY (auto-fetched from server) ---
   const geminiKeyStatus = document.getElementById("gemini-key-status");
+  const aiProviderName = document.getElementById("ai-provider-name");
 
   async function fetchGeminiKeyFromServer() {
     const token = localStorage.getItem("arzoma_admin_token");
@@ -386,25 +387,34 @@ document.addEventListener("DOMContentLoaded", () => {
         body: JSON.stringify({ token })
       });
       const data = await res.json();
+      const provider = data.provider || "gemini";
       if (data.key) {
-        localStorage.setItem("arzoma_gemini_key", data.key);
+        localStorage.setItem("arzoma_ai_key", data.key);
+        localStorage.setItem("arzoma_ai_provider", provider);
+        localStorage.removeItem("arzoma_gemini_key");
       } else {
+        localStorage.removeItem("arzoma_ai_key");
         localStorage.removeItem("arzoma_gemini_key");
       }
     } catch {}
-    loadGeminiKey();
+    loadAIKey();
   }
 
-  function loadGeminiKey() {
-    const key = localStorage.getItem("arzoma_gemini_key") || "";
+  function loadAIKey() {
+    const key = localStorage.getItem("arzoma_ai_key") || localStorage.getItem("arzoma_gemini_key") || "";
+    const provider = localStorage.getItem("arzoma_ai_provider") || "gemini";
     if (geminiKeyStatus) {
       if (key) {
-        geminiKeyStatus.textContent = "Key tersimpan (dari server)";
+        geminiKeyStatus.textContent = `Key ${provider} tersimpan (dari server)`;
         geminiKeyStatus.style.color = "#25d366";
       } else {
-        geminiKeyStatus.textContent = "Belum diatur — set GEMINI_API_KEY di Netlify env vars";
+        geminiKeyStatus.textContent = "Belum diatur — set AI_PROVIDER & API key di Netlify env vars";
         geminiKeyStatus.style.color = "var(--text-muted)";
       }
+    }
+    if (aiProviderName) {
+      const names = { deepseek: "DeepSeek", groq: "Groq (Llama 3)", gemini: "Gemini" };
+      aiProviderName.textContent = names[provider] || provider;
     }
   }
 

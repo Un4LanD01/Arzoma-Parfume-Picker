@@ -386,13 +386,12 @@
         </div>
       </div>
       <div class="admin-card glass" style="padding:25px; max-width:500px; margin-top:20px;">
-        <h3><i class="fa-solid fa-brain"></i> Gemini AI — API Key</h3>
+        <h3><i class="fa-solid fa-brain"></i> AI — API Key</h3>
         <p style="font-size:13px; color:var(--text-muted); margin-bottom:10px;">
-          API Key Gemini otomatis diambil dari server setelah login. Tidak perlu memasukkan manual di tiap perangkat.
+          API Key AI otomatis diambil dari server setelah login. Provider saat ini: <strong id="ai-provider-name">Groq</strong>.
         </p>
         <p style="font-size:13px; color:var(--text-muted); margin-bottom:15px;">
-          <strong style="color:var(--primary-gold);">Cara setting:</strong> Tambah <code style="background:rgba(255,255,255,0.05); padding:2px 6px; border-radius:4px;">GEMINI_API_KEY</code> sebagai Environment Variable di dashboard Netlify.
-          Dapatkan key gratis di <a href="https://aistudio.google.com/apikey" target="_blank" style="color:var(--primary-gold);">aistudio.google.com/apikey</a>.
+          <strong style="color:var(--primary-gold);">Cara setting:</strong> Tambah <code style="background:rgba(255,255,255,0.05); padding:2px 6px; border-radius:4px;">AI_PROVIDER</code> (gemini/deepseek) dan key-nya sebagai Environment Variable di dashboard Netlify.
         </p>
         <div>
           <span id="gemini-key-status" style="font-size:13px;"></span>

@@ -525,7 +525,7 @@ document.addEventListener("DOMContentLoaded", () => {
 
     // 2. Generate dynamic AI text (template first, real AI if available)
     const aiReason = generateDynamicDescription(selectedTexts, bestProduct);
-    let useRealAI = isGeminiReady();
+    let useRealAI = isAIReady();
 
     // 3. Save to analytics
     quizAnalytics.totalQuizzes += 1;
