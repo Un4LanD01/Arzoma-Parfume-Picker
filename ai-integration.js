@@ -140,14 +140,29 @@ JANGAN sebut harga. JANGAN gunakan markdown/formatting, cukup teks biasa.`;
 }
 
 async function chatWithAI(message, history = []) {
-  const key = getAIKey();
-  if (!key) return "API key AI belum diatur. Admin bisa atur di halaman Admin > Pengaturan.";
-
   const contextProducts = getPerfumeCatalogSummary();
-  const fullSystem = `${ARZOMA_SYSTEM_PROMPT}\n\nKatalog Arzoma saat ini:\n${contextProducts}`;
+
+  // Try server-side chat (no API key needed on client)
+  try {
+    const res = await fetch("/.netlify/functions/chat", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ message, history, catalog: contextProducts })
+    });
+    if (res.ok) {
+      const data = await res.json();
+      if (data.reply) return data.reply;
+    }
+  } catch (e) {
+    // Fall through to client-side
+  }
+
+  // Fallback: client-side with stored key
+  const key = getAIKey();
+  if (!key) return "AI belum dikonfigurasi. Admin bisa atur AI key di dashboard Netlify.";
 
   const messages = [
-    { role: "system", content: fullSystem },
+    { role: "system", content: `${ARZOMA_SYSTEM_PROMPT}\n\nKatalog Arzoma saat ini:\n${contextProducts}` },
     ...history.map(h => ({ role: h.role, content: h.text })),
     { role: "user", content: message }
   ];
@@ -155,6 +170,7 @@ async function chatWithAI(message, history = []) {
   try {
     return await callAI(messages);
   } catch (e) {
+    console.error("AI chat error:", e);
     return "Maaf, AI sedang sibuk. Coba lagi ya!";
   }
 }
