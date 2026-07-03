@@ -633,10 +633,18 @@ document.addEventListener("DOMContentLoaded", () => {
     chatPanel.classList.remove("open");
   });
 
+  function cleanAI(text) {
+    let t = text.replace(/\*\*(.*?)\*\*/g, "$1").replace(/\*(.*?)\*/g, "$1").trim();
+    const lines = t.split("\n").filter(Boolean);
+    if (lines.length > 2) t = lines.slice(0, 2).join("\n");
+    if (t.length > 250) t = t.slice(0, t.lastIndexOf(".", 247) + 1) || t.slice(0, 247) + "...";
+    return t;
+  }
+
   function addChatMessage(text, isUser = false) {
     const div = document.createElement("div");
     div.className = `chat-msg ${isUser ? "user-msg" : "ai-msg"}`;
-    div.textContent = text;
+    div.textContent = isUser ? text : cleanAI(text);
     chatMessages.appendChild(div);
     chatMessages.scrollTop = chatMessages.scrollHeight;
     return div;

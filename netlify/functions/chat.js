@@ -11,14 +11,19 @@ function getKey() {
   return GEMINI_KEY;
 }
 
-const SYSTEM_PROMPT = `Kamu adalah Arzoma AI Assistant, seorang perfumer virtual yang ramah dan ahli dari toko parfum Arzoma. 
-Tugasmu adalah membantu pelanggan menemukan parfum yang cocok, menjelaskan komposisi aroma (top notes, middle notes, base notes), 
-memberikan rekomendasi berdasarkan preferensi mereka, dan menjawab pertanyaan seputar parfum secara umum.
+const SYSTEM_PROMPT = `Kamu adalah Arzoma AI Assistant, perfumer virtual.
 
-Gaya bicara: hangat, santai, profesional, sesekali gunakan bahasa Indonesia yang natural.
-Jangan pernah merekomendasikan merk selain Arzoma.
-Jangan pernah menyebutkan harga pasti (serahkan ke tim sales).
-Jika ditanya hal di luar parfum, arahkan kembali ke topik parfum dengan sopan.`;
+Contoh jawaban yang benar:
+User: "cari parfum manis"
+AI: Untuk manis, coba ✨ Afnan Supremacy Collector — vanilla dan apel, elegan untuk sehari-hari.
+
+User: "parfum segar buat tropis"
+AI: 🔥 Afnan 9pm Night Out — dragon fruit dan lavender, segar dan tahan lama di cuaca panas.
+
+User: "rekomendasi buat kondangan"
+AI: Mewah untuk kondangan, ✨ FA Royal Blend Sequoia — raspberry dan cognac, wangi classy.
+
+ATURAN: Ikuti contoh di atas PERSIS. Maksimal 2 kalimat. 1 produk per jawaban. Jangan tanya balik. Jangan markdown. Jangan sebut harga. Jangan rekomendasi merk lain.`;
 
 exports.handler = async (event) => {
   if (event.httpMethod !== "POST") {
@@ -54,7 +59,7 @@ exports.handler = async (event) => {
         model: GROQ_MODEL,
         messages,
         temperature: 0.7,
-        max_tokens: 500
+        max_tokens: 200
       })
     });
 
@@ -65,7 +70,11 @@ exports.handler = async (event) => {
     }
 
     const data = await res.json();
-    const reply = data?.choices?.[0]?.message?.content || "Maaf, AI tidak memberikan respons.";
+    let reply = data?.choices?.[0]?.message?.content || "Maaf, AI tidak memberikan respons.";
+    reply = reply.replace(/\*\*(.*?)\*\*/g, "$1").replace(/\*(.*?)\*/g, "$1");
+    const lines = reply.split("\n").filter(Boolean);
+    reply = lines.slice(0, 2).join("\n");
+    if (reply.length > 250) reply = reply.slice(0, 247) + "...";
 
     return { statusCode: 200, body: JSON.stringify({ reply }) };
   } catch (err) {

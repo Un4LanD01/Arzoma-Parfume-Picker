@@ -1209,7 +1209,8 @@ footer {
   padding: 10px 14px;
   border-radius: 12px;
   font-size: 13px;
-  line-height: 1.5;
+  line-height: 1.6;
+  white-space: pre-wrap;
   animation: msgSlide 0.2s ease;
 }
 @keyframes msgSlide {

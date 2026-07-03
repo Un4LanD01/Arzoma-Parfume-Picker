@@ -23,7 +23,7 @@ async function callGeminiText(prompt) {
     headers: { "Content-Type": "application/json" },
     body: JSON.stringify({
       contents: [{ parts: [{ text: prompt }] }],
-      generationConfig: { temperature: 0.8, maxOutputTokens: 400, topK: 1, topP: 0.9 }
+      generationConfig: { temperature: 0.8, maxOutputTokens: 250, topK: 1, topP: 0.9 }
     })
   });
   if (!res.ok) throw new Error(`AI error (${res.status})`);
@@ -39,7 +39,7 @@ async function callGeminiChat(messages) {
     headers: { "Content-Type": "application/json" },
     body: JSON.stringify({
       contents: [{ parts }],
-      generationConfig: { temperature: 0.7, maxOutputTokens: 500, topK: 1, topP: 0.9 }
+      generationConfig: { temperature: 0.7, maxOutputTokens: 250, topK: 1, topP: 0.9 }
     })
   });
   if (!res.ok) throw new Error(`AI error (${res.status})`);
@@ -62,7 +62,7 @@ async function callOpenAI(messages) {
       model: config.model,
       messages,
       temperature: 0.7,
-      max_tokens: 500
+      max_tokens: 200
     })
   });
   if (!res.ok) {
@@ -92,17 +92,21 @@ async function callAIText(systemPrompt, userPrompt) {
   ]);
 }
 
-const ARZOMA_SYSTEM_PROMPT = `Kamu adalah Arzoma AI Assistant, seorang perfumer virtual yang ramah dan ahli dari toko parfum Arzoma. 
-Tugasmu adalah membantu pelanggan menemukan parfum yang cocok, menjelaskan komposisi aroma (top notes, middle notes, base notes), 
-memberikan rekomendasi berdasarkan preferensi mereka, dan menjawab pertanyaan seputar parfum secara umum.
+const ARZOMA_SYSTEM_PROMPT = `Kamu adalah Arzoma AI Assistant, perfumer virtual.
 
-Gaya bicara: hangat, santai, profesional, sesekali gunakan bahasa Indonesia yang natural.
-Jangan pernah merekomendasikan merk selain Arzoma.
-Jangan pernah menyebutkan harga pasti (serahkan ke tim sales).
-Jika ditanya hal di luar parfum, arahkan kembali ke topik parfum dengan sopan.
+Contoh jawaban:
+User: "cari parfum manis"
+AI: Untuk manis, coba ✨ Afnan Supremacy Collector — vanilla dan apel, elegan untuk sehari-hari.
 
-Katalog produk Arzoma ada di database localStorage dengan key "arzoma_perfumes".
-Gunakan informasi itu untuk membantu rekomendasi.`;
+User: "parfum segar buat tropis"
+AI: 🔥 Afnan 9pm Night Out — dragon fruit dan lavender, segar tahan panas.
+
+User: "rekomendasi kondangan"
+AI: Mewah untuk kondangan, ✨ FA Royal Blend Sequoia — raspberry dan cognac, wangi classy.
+
+ATURAN: Ikuti contoh di atas. Maks 2 kalimat. 1 produk. Jangan tanya balik. Jangan markdown. Jangan sebut harga. Jangan merk lain.
+
+Katalog Arzoma ada di localStorage key "arzoma_perfumes".`;
 
 async function generateRealAIDescription(selectedTexts, bestProduct) {
   const mood = selectedTexts[0] || "suasana tertentu";
@@ -113,24 +117,16 @@ async function generateRealAIDescription(selectedTexts, bestProduct) {
   const midNotes = (bestProduct.middleNotes || []).join(", ");
   const baseNotes = (bestProduct.baseNotes || []).join(", ");
 
-  const prompt = `Kamu adalah perfumer Arzoma. Seorang pelanggan telah selesai mengikuti kuis visual dan mendapatkan rekomendasi parfum.
+  const prompt = `Kamu adalah perfumer Arzoma. Pelanggan selesai kuis.
 
-Mereka memilih:
-- Suasana/Mood: ${mood}
-- Gaya Pakaian: ${ootd}
-- Aktivitas/Kondisi: ${cond}
+Pilihan: Mood=${mood}, OOTD=${ootd}, Aktivitas=${cond}
+Rekomendasi: ${bestProduct.name}
+Notes: ${topNotes} | ${midNotes} | ${baseNotes}
+Deskripsi: ${bestProduct.desc}
 
-Parfum yang direkomendasikan: ${bestProduct.name}
-Kategori: ${bestProduct.category}
-Top Notes: ${topNotes}
-Middle Notes: ${midNotes}
-Base Notes: ${baseNotes}
-Deskripsi produk: ${bestProduct.desc}
-
-Buatlah 2-3 paragraf pendek menjelaskan MENGAPA parfum ini cocok untuk mereka berdasarkan pilihan mereka, 
-dan bagaimana aroma ini akan berkembang di kulit (dari top notes ke base notes). 
-Gaya bahasa hangat dan personal. Gunakan bahasa Indonesia campuran Inggris sesekali. 
-JANGAN sebut harga. JANGAN gunakan markdown/formatting, cukup teks biasa.`;
+Buat 2 kalimat pendek kenapa parfum ini cocok.
+MAKSIMAL 3 baris, pakai emoji.
+JANGAN sebut harga. JANGAN markdown.`;
 
   try {
     return await callAIText(ARZOMA_SYSTEM_PROMPT, prompt);
