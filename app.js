@@ -100,8 +100,32 @@ document.addEventListener("DOMContentLoaded", () => {
     }
   ];
 
+  // Helper: cache-bust image URLs to force browser refresh
+  function imgSrc(url) {
+    if (!url) return "";
+    const separator = url.includes("?") ? "&" : "?";
+    return url + separator + "_cb=" + (window.__imgVersion || (window.__imgVersion = Date.now()));
+  }
+
+  // Sync products from server, fallback to local cache
+  async function syncFromServer() {
+    try {
+      const res = await fetch("/.netlify/functions/sync-products");
+      const data = await res.json();
+      if (data.source === "server" && Array.isArray(data.data) && data.data.length > 0) {
+        perfumes = data.data;
+        localStorage.setItem("arzoma_perfumes", JSON.stringify(perfumes));
+        window.__imgVersion = Date.now();
+        return true;
+      }
+    } catch (e) {
+      console.log("Server sync unavailable, using local cache");
+    }
+    return false;
+  }
+
   // Initialize DB and Analytics with LocalStorage
-  function initData() {
+  async function initData() {
     // WA Number
     const storedWA = localStorage.getItem("arzoma_wa");
     if (storedWA) {
@@ -110,7 +134,7 @@ document.addEventListener("DOMContentLoaded", () => {
       localStorage.setItem("arzoma_wa", waNumber);
     }
     
-    // 1. Products
+    // 1. Products — load local cache first, then sync from server
     const storedPerfumes = localStorage.getItem("arzoma_perfumes");
     if (storedPerfumes) {
       perfumes = JSON.parse(storedPerfumes);
@@ -125,6 +149,14 @@ document.addEventListener("DOMContentLoaded", () => {
         perfumes[i] = p;
       }
     });
+
+    // Try to get latest products from server (async)
+    const synced = await syncFromServer();
+    if (synced) {
+      // Re-render if on catalog page
+      if (typeof renderProducts === "function") renderProducts();
+      if (typeof renderCatalog === "function") renderCatalog();
+    }
 
     // 2. Quiz Analytics (with dummy data on first load for stunning UI charts)
     const storedAnalytics = localStorage.getItem("arzoma_analytics");
@@ -154,10 +186,9 @@ document.addEventListener("DOMContentLoaded", () => {
       };
       localStorage.setItem("arzoma_analytics", JSON.stringify(quizAnalytics));
     }
-    
   }
 
-  initData();
+  (async () => { await initData(); })();
 
   // --- UI RENDERING FUNCTIONS ---
 
@@ -230,7 +261,7 @@ document.addEventListener("DOMContentLoaded", () => {
 
       card.innerHTML = `
         <div class="product-image-container">
-          <img src="${perfume.image}" alt="${perfume.name}">
+          <img src="${imgSrc(perfume.image)}" alt="${perfume.name}">
           <span class="product-category-badge">${perfume.category}</span>
         </div>
         <div class="product-info">
@@ -445,7 +476,7 @@ document.addEventListener("DOMContentLoaded", () => {
       const card = document.createElement("div");
       card.className = "quiz-option-card glass";
       card.innerHTML = `
-        <img src="${opt.image}" alt="${opt.text}">
+          <img src="${imgSrc(opt.image)}" alt="${opt.text}">
         <div class="quiz-option-overlay">
           <h3>${opt.text}</h3>
           <p>${opt.subtext}</p>
@@ -525,7 +556,7 @@ document.addEventListener("DOMContentLoaded", () => {
       </div>
       <div class="result-container" style="margin-top: 30px;">
         <div class="result-image-wrapper">
-          <img src="${bestProduct.image}" alt="${bestProduct.name}">
+          <img src="${imgSrc(bestProduct.image)}" alt="${bestProduct.name}">
           <div class="match-badge">${highestScore}% Cocok</div>
         </div>
         <div class="result-details">
