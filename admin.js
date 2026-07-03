@@ -351,8 +351,9 @@ document.addEventListener("DOMContentLoaded", () => {
       Sweet: "https://images.unsplash.com/photo-1523293182086-7651a899d37f?auto=format&fit=crop&w=500&q=80",
       Floral: "https://images.unsplash.com/photo-1547887537-6158d64c35b3?auto=format&fit=crop&w=500&q=80"
     };
+    const defaultImg = "https://images.unsplash.com/photo-1594035910387-fea47794261f?auto=format&fit=crop&w=500&q=80";
 
-    const productData = { name, price, category, topNotes, middleNotes, baseNotes, notes, moods, ootds, dupes, desc, image: customImage || imageMap[category] };
+    const productData = { name, price, category, topNotes, middleNotes, baseNotes, notes, moods, ootds, dupes, desc, image: customImage || imageMap[category] || defaultImg };
 
     if (editingId) {
       const idx = perfumes.findIndex(p => p.id === editingId);

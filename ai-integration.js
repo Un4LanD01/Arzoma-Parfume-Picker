@@ -33,13 +33,23 @@ async function callGeminiText(prompt) {
 
 async function callGeminiChat(messages) {
   const key = getAIKey();
-  const parts = messages.map(m => ({ text: `${m.role === "user" ? "User" : "Arzoma AI"}: ${m.content}` }));
+  const roleMap = { system: "user", user: "user", model: "model", assistant: "model" };
+  const contents = [];
+  for (const m of messages) {
+    const role = roleMap[m.role] || "user";
+    const last = contents[contents.length - 1];
+    if (last && last.role === role) {
+      last.parts.push({ text: m.content });
+    } else {
+      contents.push({ role, parts: [{ text: m.content }] });
+    }
+  }
   const res = await fetch(`${GEMINI_ENDPOINT}?key=${key}`, {
     method: "POST",
     headers: { "Content-Type": "application/json" },
     body: JSON.stringify({
-      contents: [{ parts }],
-      generationConfig: { temperature: 0.7, maxOutputTokens: 250, topK: 1, topP: 0.9 }
+      contents,
+      generationConfig: { temperature: 0.7, maxOutputTokens: 200, topK: 1, topP: 0.9 }
     })
   });
   if (!res.ok) throw new Error(`AI error (${res.status})`);
@@ -52,6 +62,8 @@ async function callOpenAI(messages) {
   const config = OPENAI_ENDPOINTS[provider];
   if (!config) throw new Error(`Provider ${provider} tidak dikenal`);
   const key = getAIKey();
+  const roleMap = { system: "system", user: "user", model: "assistant", assistant: "assistant" };
+  const mapped = messages.map(m => ({ role: roleMap[m.role] || "user", content: m.content }));
   const res = await fetch(config.url, {
     method: "POST",
     headers: {
@@ -60,7 +72,7 @@ async function callOpenAI(messages) {
     },
     body: JSON.stringify({
       model: config.model,
-      messages,
+      messages: mapped,
       temperature: 0.7,
       max_tokens: 200
     })

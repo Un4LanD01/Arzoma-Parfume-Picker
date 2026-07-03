@@ -41,11 +41,12 @@ exports.handler = async (event) => {
       return { statusCode: 200, body: JSON.stringify({ reply: "AI tidak dikonfigurasi. Admin perlu set AI_PROVIDER & API key di Netlify." }) };
     }
 
-    const fullSystem = `${SYSTEM_PROMPT}\n\nKatalog Arzoma saat ini:\n${catalog || "Tidak tersedia"}`;
+    const fullSystem = `${SYSTEM_PROMPT}\n\nKatalog Arzoma:\n${catalog || "Tidak tersedia"}`;
 
+    const roleMap = { user: "user", model: "assistant", assistant: "assistant" };
     const messages = [
       { role: "system", content: fullSystem },
-      ...(history || []).map(h => ({ role: h.role, content: h.text })),
+      ...(history || []).map(h => ({ role: roleMap[h.role] || "user", content: h.text })),
       { role: "user", content: message }
     ];
 

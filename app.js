@@ -100,12 +100,15 @@ document.addEventListener("DOMContentLoaded", () => {
     }
   ];
 
-  // Helper: cache-bust image URLs to force browser refresh
+  const PLACEHOLDER_IMG = "data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='200' height='200'%3E%3Crect fill='%23333' width='200' height='200'/%3E%3Ctext fill='%23aaa' font-size='14' text-anchor='middle' x='100' y='105'%3EArzoma%3C/text%3E%3C/svg%3E";
+
   function imgSrc(url) {
-    if (!url) return "";
+    if (!url) return PLACEHOLDER_IMG;
     const separator = url.includes("?") ? "&" : "?";
     return url + separator + "_cb=" + (window.__imgVersion || (window.__imgVersion = Date.now()));
   }
+
+  window.imgOnError = function(e) { e.target.src = PLACEHOLDER_IMG; };
 
   // Sync products from server, fallback to local cache
   async function syncFromServer() {
@@ -261,7 +264,7 @@ document.addEventListener("DOMContentLoaded", () => {
 
       card.innerHTML = `
         <div class="product-image-container">
-          <img src="${imgSrc(perfume.image)}" alt="${perfume.name}">
+          <img src="${imgSrc(perfume.image)}" alt="${perfume.name}" onerror="imgOnError(event)">
           <span class="product-category-badge">${perfume.category}</span>
         </div>
         <div class="product-info">
@@ -476,7 +479,7 @@ document.addEventListener("DOMContentLoaded", () => {
       const card = document.createElement("div");
       card.className = "quiz-option-card glass";
       card.innerHTML = `
-          <img src="${imgSrc(opt.image)}" alt="${opt.text}">
+          <img src="${imgSrc(opt.image)}" alt="${opt.text}" onerror="imgOnError(event)">
         <div class="quiz-option-overlay">
           <h3>${opt.text}</h3>
           <p>${opt.subtext}</p>
@@ -556,7 +559,7 @@ document.addEventListener("DOMContentLoaded", () => {
       </div>
       <div class="result-container" style="margin-top: 30px;">
         <div class="result-image-wrapper">
-          <img src="${imgSrc(bestProduct.image)}" alt="${bestProduct.name}">
+          <img src="${imgSrc(bestProduct.image)}" alt="${bestProduct.name}" onerror="imgOnError(event)">
           <div class="match-badge">${highestScore}% Cocok</div>
         </div>
         <div class="result-details">
@@ -655,13 +658,13 @@ document.addEventListener("DOMContentLoaded", () => {
     if (!msg) return;
     chatInput.value = "";
     addChatMessage(msg, true);
-    chatHistory.push({ role: "user", text: msg });
 
     // Show typing indicator
     const typing = addChatMessage("Mengetik...");
     typing.innerHTML = '<i class="fa-solid fa-spinner fa-spin"></i> Mengetik...';
 
     const reply = await chatWithAI(msg, chatHistory);
+    chatHistory.push({ role: "user", text: msg });
     chatHistory.push({ role: "model", text: reply });
     typing.remove();
     addChatMessage(reply);
